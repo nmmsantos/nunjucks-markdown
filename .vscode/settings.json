@@ -1,0 +1,17 @@
+{
+    "files.exclude": {
+        "out": false
+    },
+    "search.exclude": {
+        "out": true
+    },
+    "spellright.documentTypes": [
+        "markdown",
+        "latex",
+        "plaintext"
+    ],
+    "spellright.language": [
+        "English (American)"
+    ],
+    "typescript.tsc.autoDetect": "off"
+}

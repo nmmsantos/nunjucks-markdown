@@ -1,0 +1,9 @@
+{
+    "injectionSelector": "L:text.html.markdown",
+    "patterns": [
+        {
+            "include": "text.html.nunjucks"
+        }
+    ],
+    "scopeName": "text.html.markdown.nunjucks-injection"
+}
