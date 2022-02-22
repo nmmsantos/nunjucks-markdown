@@ -59,9 +59,16 @@ const createParser: (originalParser: (src: string, env: any) => Token[]) => (src
 
         const firstLine = src.split('\n')[0].replace(/\s/g, '');
 
-        if (firstLine === '[//]:#(nunjucks)' || firstLine === '[//]:#"nunjucks"') {
+        const isNunjucksDbg = firstLine === '[//]:#(nunjucks-dbg)' || firstLine === '[//]:#"nunjucks-dbg"';
+        const isNunjucks = isNunjucksDbg || firstLine === '[//]:#(nunjucks)' || firstLine === '[//]:#"nunjucks"';
+
+        if (isNunjucks) {
             try {
                 md = nunjucksEnv.renderString(src, {});
+
+                if (isNunjucksDbg) {
+                    md = `# Source\n\n\`\`\`\`\`\`\`markdown\n${md}\n\`\`\`\`\`\`\``;
+                }
             } catch (e) {
                 md = `# Nunjucks error\n\n\`\`\`javascript\n${e}\n\`\`\``;
             }
