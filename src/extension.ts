@@ -3,7 +3,8 @@ import * as MarkdownIt from 'markdown-it';
 import * as Token from 'markdown-it/lib/token';
 import { Environment, Loader, LoaderSource } from 'nunjucks';
 import { dirname, join, relative, resolve } from 'path';
-import { ExtensionContext, window, workspace } from 'vscode';
+import { commands, ExtensionContext, Selection, window, workspace } from 'vscode';
+import { EncryptionContext } from './encryption-context';
 
 class VSCodeLoader extends Loader {
     isRelative(filename: string): boolean {
@@ -48,10 +49,18 @@ class VSCodeLoader extends Loader {
     }
 }
 
-const createParser: (originalParser: (src: string, env: any) => Token[]) => (src: string, env: any) => Token[] = (originalParser) => {
+const createParser: (originalParser: (src: string, env: any) => Token[], encryptionContext: EncryptionContext) => (src: string, env: any) => Token[] = (originalParser, encryptionContext) => {
     const nunjucksEnv = new Environment(new VSCodeLoader(), {
         autoescape: false,
         throwOnUndefined: true
+    });
+
+    nunjucksEnv.addFilter('decrypt', (str: string, defaultStr: string | undefined) => {
+        try {
+            return encryptionContext.decrypt(str);
+        } catch {
+            return defaultStr || '#ENCRYPTED#';
+        }
     });
 
     return (src, env) => {
@@ -78,13 +87,68 @@ const createParser: (originalParser: (src: string, env: any) => Token[]) => (src
     };
 };
 
-export function activate(_: ExtensionContext) {
+export function activate(context: ExtensionContext) {
+    const encryptionContext = new EncryptionContext();
+
+    const setEncryptionPasswordCommand = 'nunjucks-markdown.setEncryptionPassword';
+    const encryptCommand = 'nunjucks-markdown.encrypt';
+    const decryptCommand = 'nunjucks-markdown.decrypt';
+
+    const setEncryptionPasswordCommandHandler = async () => {
+        const result = await window.showInputBox({
+            ignoreFocusOut: true,
+            password: true,
+            prompt: 'Encryption password',
+            title: context.extension.packageJSON.displayName
+        });
+
+        if (result) {
+            await encryptionContext.setPassword(result);
+        }
+    };
+
+    const replaceSelections = async (fn: (str: string) => string) => {
+        const selections: { selection: Selection; replace: string; }[] = [];
+        const editor = window.activeTextEditor;
+
+        if (editor) {
+            for (const selection of editor.selections) {
+                const text = editor.document.getText(selection);
+
+                if (text) {
+                    try {
+                        selections.push({ selection, replace: fn(text) });
+                    } catch (e) {
+                        await window.showErrorMessage((e instanceof Error) ? e.message : String(e));
+                        return;
+                    }
+                }
+            }
+
+            await editor.edit(edit => {
+                for (const { selection, replace } of selections) {
+                    edit.replace(selection, replace);
+                }
+            });
+        }
+    };
+
+    const encryptCommandHandler = async () => {
+        await replaceSelections(encryptionContext.encrypt.bind(encryptionContext));
+    };
+
+    const decryptCommandHandler = async () => {
+        await replaceSelections(encryptionContext.decrypt.bind(encryptionContext));
+    };
+
+    context.subscriptions.push(commands.registerCommand(setEncryptionPasswordCommand, setEncryptionPasswordCommandHandler));
+    context.subscriptions.push(commands.registerCommand(encryptCommand, encryptCommandHandler));
+    context.subscriptions.push(commands.registerCommand(decryptCommand, decryptCommandHandler));
+
     return {
         extendMarkdownIt(md: MarkdownIt) {
-            md.parse = createParser(md.parse.bind(md));
+            md.parse = createParser(md.parse.bind(md), encryptionContext);
             return md;
         }
     };
 }
-
-export function deactivate() { }

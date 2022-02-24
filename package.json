@@ -1,5 +1,9 @@
 {
-    "activationEvents": [],
+    "activationEvents": [
+        "onCommand:nunjucks-markdown.setEncryptionPassword",
+        "onCommand:nunjucks-markdown.encrypt",
+        "onCommand:nunjucks-markdown.decrypt"
+    ],
     "author": {
         "email": "eu.nuno@gmail.com",
         "name": "Nuno Santos"
@@ -11,11 +15,26 @@
         "Programming Languages"
     ],
     "contributes": {
+        "commands": [
+            {
+                "command": "nunjucks-markdown.setEncryptionPassword",
+                "title": "Nunjucks Markdown: Set Encryption Password"
+            },
+            {
+                "command": "nunjucks-markdown.encrypt",
+                "title": "Nunjucks Markdown: Encrypt"
+            },
+            {
+                "command": "nunjucks-markdown.decrypt",
+                "title": "Nunjucks Markdown: Decrypt"
+            }
+        ],
         "grammars": [
             {
                 "injectTo": [
                     "text.html.markdown"
                 ],
+                "language": "nunjucks",
                 "path": "./syntaxes/nunjucks-injection.tmLanguage.json",
                 "scopeName": "text.html.markdown.nunjucks-injection"
             }
@@ -63,8 +82,8 @@
         "lint": "eslint src --ext ts",
         "package": "vsce package",
         "publish": "vsce publish",
-        "vscode:prepublish": "npm run compile",
+        "vscode:prepublish": "tsc -p ./ --sourceMap false",
         "watch": "tsc -watch -p ./"
     },
-    "version": "1.1.0"
+    "version": "1.2.0"
 }
