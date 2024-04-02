@@ -2,6 +2,10 @@
 
 All notable changes to the "nunjucks-markdown" extension will be documented in this file.
 
+## [1.2.1]
+
+- Updated dependencies
+
 ## [1.2.0]
 
 - Added encryption filter to Nunjucks

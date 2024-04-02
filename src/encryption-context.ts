@@ -29,9 +29,9 @@ export class EncryptionContext {
         }
 
         const encrypted = Buffer.from(ciphertext, 'base64');
-        const iv = encrypted.slice(0, this.ivLength);
-        const authTag = encrypted.slice(this.ivLength, this.ivLength + this.authTagLength);
-        const parts = encrypted.slice(this.ivLength + this.authTagLength);
+        const iv = encrypted.subarray(0, this.ivLength);
+        const authTag = encrypted.subarray(this.ivLength, this.ivLength + this.authTagLength);
+        const parts = encrypted.subarray(this.ivLength + this.authTagLength);
         const decipher = createDecipheriv('aes-256-gcm', this.key, iv);
         decipher.setAuthTag(authTag);
 
